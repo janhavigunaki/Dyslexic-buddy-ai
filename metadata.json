@@ -1,0 +1,5 @@
+{
+  "name": "Dyslexic Buddy AI",
+  "description": "A voice-first AI learning platform for dyslexic students, featuring speech-to-text, text-to-speech, and voice-controlled tutoring.",
+  "requestFramePermissions": ["microphone"]
+}
