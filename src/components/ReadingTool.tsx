@@ -23,6 +23,12 @@ export const ReadingTool: React.FC = () => {
   const [sentences, setSentences] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [isEditMode, setIsEditMode] = useState(true);
+  const [overlayColor, setOverlayColor] = useState<string>('bg-white');
+  const [lineHeight, setLineHeight] = useState<number>(1.6);
+  const [letterSpacing, setLetterSpacing] = useState<number>(0);
+  const [showRuler, setShowRuler] = useState(false);
+  const [rulerY, setRulerY] = useState(200);
+  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = translations[settings.language];
   const timerRef = useRef<number | null>(null);
@@ -142,6 +148,14 @@ export const ReadingTool: React.FC = () => {
     }
   };
 
+  const overlayColors = [
+    { name: 'White', class: 'bg-white', hex: '#FFFFFF' },
+    { name: 'Cream', class: 'bg-orange-50', hex: '#FFFDD0' },
+    { name: 'Blue', class: 'bg-blue-50', hex: '#E0F7FA' },
+    { name: 'Yellow', class: 'bg-yellow-50', hex: '#FFF9C4' },
+    { name: 'Green', class: 'bg-green-50', hex: '#E8F5E9' },
+  ];
+
   const startPractice = () => {
     if (!text) return;
     
@@ -212,6 +226,15 @@ export const ReadingTool: React.FC = () => {
           {t.readingTool}
         </h2>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-4 rounded-2xl transition-all hover:scale-105 active:scale-95 ${
+              showSettings ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'
+            }`}
+            title="Reading Settings"
+          >
+            <Type size={24} />
+          </button>
           <div className="flex bg-blue-50 p-1 rounded-xl border-2 border-blue-100">
             {(['en', 'hi', 'kn'] as Language[]).map((lang) => (
               <button
@@ -248,6 +271,73 @@ export const ReadingTool: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-6 bg-blue-50 rounded-2xl border-2 border-blue-100 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Background Tint</p>
+                <div className="flex gap-2">
+                  {overlayColors.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setOverlayColor(color.class)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all ${
+                        overlayColor === color.class ? 'border-blue-600 scale-110 shadow-md' : 'border-white'
+                      }`}
+                      style={{ backgroundColor: color.hex }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Text Spacing</p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-blue-600">
+                    <span>Line Height</span>
+                    <span>{lineHeight.toFixed(1)}</span>
+                  </div>
+                  <input 
+                    type="range" min="1" max="3" step="0.1" 
+                    value={lineHeight} onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                  <div className="flex items-center justify-between text-xs font-bold text-blue-600 mt-2">
+                    <span>Letter Spacing</span>
+                    <span>{letterSpacing}px</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="10" step="1" 
+                    value={letterSpacing} onChange={(e) => setLetterSpacing(parseInt(e.target.value))}
+                    className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="font-bold text-blue-800 text-sm uppercase tracking-wider">Focus Tools</p>
+                <button
+                  onClick={() => setShowRuler(!showRuler)}
+                  className={`w-full p-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+                    showRuler ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-blue-600 border-2 border-blue-100'
+                  }`}
+                >
+                  <div className="w-6 h-1 bg-current rounded-full" />
+                  Line Focus Ruler
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative">
         {isPracticeMode ? (
@@ -302,13 +392,23 @@ export const ReadingTool: React.FC = () => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Paste text or upload a photo..."
-                className="w-full h-96 p-8 rounded-3xl border-4 border-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all resize-none leading-relaxed shadow-xl bg-white text-gray-900"
-                style={{ fontSize: `${settings.fontSize}px`, fontFamily: 'Andika, sans-serif' }}
+                className={`w-full h-96 p-8 rounded-3xl border-4 border-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all resize-none shadow-xl ${overlayColor} text-gray-900`}
+                style={{ 
+                  fontSize: `${settings.fontSize}px`, 
+                  fontFamily: 'Andika, sans-serif',
+                  lineHeight: lineHeight,
+                  letterSpacing: `${letterSpacing}px`
+                }}
               />
             ) : (
               <div 
-                className="w-full h-96 p-8 rounded-3xl border-4 border-blue-100 shadow-xl bg-white text-gray-900 overflow-y-auto markdown-content"
-                style={{ fontSize: `${settings.fontSize}px`, fontFamily: 'Andika, sans-serif' }}
+                className={`w-full h-96 p-8 rounded-3xl border-4 border-blue-100 shadow-xl ${overlayColor} text-gray-900 overflow-y-auto markdown-content`}
+                style={{ 
+                  fontSize: `${settings.fontSize}px`, 
+                  fontFamily: 'Andika, sans-serif',
+                  lineHeight: lineHeight,
+                  letterSpacing: `${letterSpacing}px`
+                }}
                 onClick={() => setIsEditMode(true)}
               >
                 {text ? (
@@ -317,6 +417,19 @@ export const ReadingTool: React.FC = () => {
                   <p className="text-gray-400 italic">Click to type or paste text...</p>
                 )}
               </div>
+            )}
+
+            {showRuler && (
+              <motion.div
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 384 }}
+                initial={{ y: rulerY }}
+                onDragEnd={(_, info) => setRulerY(info.point.y)}
+                className="absolute left-0 right-0 h-12 bg-blue-500/20 border-y-2 border-blue-500/50 pointer-events-auto cursor-ns-resize z-10 flex items-center justify-center"
+                style={{ top: 0 }}
+              >
+                <div className="w-12 h-1 bg-blue-500/50 rounded-full" />
+              </motion.div>
             )}
             
             <div className="absolute bottom-6 right-6 flex gap-2">
